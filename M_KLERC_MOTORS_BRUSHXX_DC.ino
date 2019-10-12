@@ -27,7 +27,8 @@
 #define  PolsadorH 27             //polsadors de funcionament manual
 #define PolsadorL 25
 #define LedA 28                     //led indicador
-
+#define FLAG1 56        // A2 passat a digital
+#define FLAG2 59        // A5 passat a digital
 //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   VARIABLES SUBJECTES A CANVI PER PLACA     ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 byte AdrePlaca = 'C';  // S DE PLACA MOTORS BRUSH + DC ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 byte AdreTots = 'T';   //  T de Tots         ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
@@ -105,8 +106,11 @@ byte TramaFLAGrespTobBotiga[14] = {'A','A','X','F','L','A','G',0x00,0x00,0x00,0x
 
 byte TramaOK[14] = {'A','T','A','O','K',0x00,'<',0x00,0x00,0x00,0x00,0x00,0x00,0x00};    //  DE TOBOGAN BOTIGA  BARRERA  A MASTER 
 
+byte FlagsComEstan[14]= {'A','?','C','F','L','A','G',0x00,0x00,0x00,0x00,0x00,0x00,0x00} ; 
+byte AlarmesCom[14]= {'A','T','?','A','L','A','R',0x00,0x00,0x00,0x00,0x00,0x00,0x00} ; 
 byte OrdreATots[14]= {'A','T','C','O','R','D','S',0x00,0x00,0x00,0x00,0x00,0x00,0x00} ;  //fer silenci cintes si posem P es permet parlar cintes
 byte OrdreAMaster[14]= {'A','A','C','O','R','D','V',0x00,0x00,0x00,0x00,0x00,0x00,0x00} ;
+byte OrdreACinta[14]= {'A','?','C','C','A','R','?',0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
 //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   GESTIO DE RECEPCIÓ   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 
 byte  AdreClient = 0;
@@ -162,6 +166,15 @@ bool EsperantTornEmissio = false;
 byte PosicioDesti = 0;
 int ComptExactitudAdreces = 0;
 byte KlercCinta = 0 ;
+bool Alarma1 = 0; 
+bool CaixaHaPassat = 0;
+bool Flag1 = 0;
+bool Flag2 = 0;
+byte LedsHoritzontal  = 0;
+byte LedsVertical  = 0;
+bool BitA;   // pel comptatge dels bits de l'alçada de la caixa
+int NombreBits = 0 ;
+  
 
 //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  
 //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  MOVIMENT AUTOMATIC ROTACIO CINTA  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
@@ -176,6 +189,8 @@ byte VelocitatDemanadaCintaEnvioBaixa = 30;
  //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   MOVIMENT CARREGA I DESCARREGA  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 bool Carrega = false ;
 bool Descarrega = false ;
+bool MotorCarrega = false ;
+bool MotorDescarrega = false ;
 int ProgramaCarrega = 0 ;
 int ProgramaDescarrega = 0;
 
@@ -229,7 +244,8 @@ pinMode( PolsadorH ,INPUT);
 pinMode( PolsadorL ,INPUT);
 pinMode( INTZERO ,INPUT);
 pinMode( INTDOS ,INPUT);
-
+pinMode( FLAG1 ,INPUT);
+pinMode( FLAG2 ,INPUT);
 Serial.begin(9600);     
 Serial1.begin(9600);  // Obrir el port de comunicacions a 9600 baudis
 Serial.setTimeout(40); 
@@ -291,9 +307,9 @@ if ( BotoH == HIGH || BotoL == HIGH ) {  MovimentManual(); } else {digitalWrite(
                                   Byte11 = TramaAutoritzada[11];
    HeRebut = false;
    ConsolaB();
-   MissatgeEnExecucio = true;                                
+   MissatgeEnExecucio = true;         // S'HA REBUT UN MISSATGE això donarà autoritzacio a certs funcionaments                       
                                    }
-
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄      ORDRES DE SISTEMA DE MASTER   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
                                    
  if (MissatgeEnExecucio == true  && AdreRemitent == 'A' ){  //aixó és un ordre d'un superior
                                                                           switch (DefinicioMissatge){
@@ -323,9 +339,8 @@ if ( BotoH == HIGH || BotoL == HIGH ) {  MovimentManual(); } else {digitalWrite(
                                                                                                                      }                                                                          
                                                             }
 
- 
-//TopFinalEmissio
- 
+ //▄▄▄▄▄▄▄▄▄▄▄▄▄      ORDRES DE CINTA I COMANDA DESPLAÇAMENT  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+
  if (MissatgeEnExecucio == true ) {
                                                             switch (DefinicioMissatge){
                                                                    case 'T':                 // recepcio de barreres  tinc una caixa per agafar . Anuncio la meva posició x                                                                               
@@ -335,7 +350,7 @@ if ( BotoH == HIGH || BotoL == HIGH ) {  MovimentManual(); } else {digitalWrite(
                                                                                  BarreraRemitent  = Byte8 ;
                                                                                  EsticOperant = true; Permisos();                                                                                                                                                                  
                                                                                  DefinicioMissatge = 1;
-                                                                                
+                                                                                 MissatgeEnExecucio = false;
                                                                             break;
 /*                                                                   case 1:                    //ordre seguent, envio de demanda de trasnport a master
                                                                                 if (  TopFinalEmissio == true ) {
@@ -344,10 +359,8 @@ if ( BotoH == HIGH || BotoL == HIGH ) {  MovimentManual(); } else {digitalWrite(
                                                                                         for (int CT = 0; CT <14; CT++) {  TramaEnvio[CT] = OrdreAMaster[CT];  }
                                                                                         EnvioTrama = true ;  TX485(); 
                                                                                         DefinicioMissatge = 0;
-                                                                                        MissatgeEnExecucio = false;                                                                                          
-                                                                                        
-                                                                                                                                  }
-*/                                                                                                                                  
+                                                                                        MissatgeEnExecucio = false;                                                                                                                                                                                  
+                                                                                                                                  }*/                                                                                                                                  
                                                                              break;   
                                                                     case 'F':                                                                        
                                                                             break;                    
@@ -361,20 +374,89 @@ if ( BotoH == HIGH || BotoL == HIGH ) {  MovimentManual(); } else {digitalWrite(
                                                                              if ( PosicioDesti == Byte7 ) ComptExactitudAdreces++ ; 
                                                                              if ( BarreraRemitent == Byte8 ) ComptExactitudAdreces++ ; 
                                                                              if ( KlercCinta == Byte10 ) ComptExactitudAdreces++ ; 
-                                                                             if (ComptExactitudAdreces == 4 )  { Carrega = true ; ProgramaCarrega = 1; }
-                                                                               
-                                                
-                                                                             
-                                                                                                                                                     
-  //byte VelocitatDemanadaCintaEnvioMitja = 128;                                                                               
+                                                                             if (ComptExactitudAdreces == 4 )  { Carrega = true ; ProgramaCarrega = 1; CaixaHaPassat = 0; } else
+                                                                                                                                    { Carrega = false ; ProgramaCarrega = 0;  
+                                                                                                                                                          Alarma1 = true ; Alarmes(); }
+                                                                             MissatgeEnExecucio = false;                                                                            
                                                                             break;
-                                                                         
-                                                                                                  }                                                                                                                                                   
-                                                                                                            
-                                                                                                                                                   
+                                                                     case'g':
+                                                                                LedsHoritzontal =Byte10 ;
+                                                                                LedsVertical = Byte11 ;
+                                                                       break;
+                                                                            
+                                                                                             }                                                                                                                                                   
                                                             } 
 
+//▄▄▄▄▄▄▄▄▄▄▄▄▄      ORDRES DE CARREGA CAIXA EN SHUTTLE combinat amb recepció a sobre ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 
+
+if (Carrega == true ){
+                                  Flag1 = digitalRead ( FLAG1);   Flag2 = digitalRead ( FLAG2);           //llegim contanment els flags 
+                                  if (Flag1 == false && Flag2 == false ) CaixaHaPassat =  true;             // quan els flags 1 i 2 s'ha  tapat, considerem que esta passant un objecte
+                                    switch (ProgramaCarrega){
+                                               case 1:                                  //posem en marxa la potencia brush - posem en marxa motor carrega velocitat maxima  - ordenem a cinta de carregar
+                                                                                              //a velocitat mitja, i passem al pas 2
+                                                         digitalWrite( PowerMotorDc,HIGH );
+                                                         digitalWrite( MotorSortidaDireccio,HIGH );analogWrite( MotorSortidaPwm,255 );   // HIGH es direccio carregar caixa
+                                                         OrdreACinta[6] =   'i'   ;
+                                                         OrdreACinta[7] = 128;
+                                                         for (int CT = 0; CT <14; CT++) {TramaEnvio[CT] = OrdreACinta[CT]; }
+                                                         EnvioTrama = true ;  TX485();
+                                                         ProgramaCarrega = 2;                                                
+                                               break;                                               
+                                               case 2:                               //quan el flag 1 queda lliure, parem el motor del shuttle i enviem missatge al motor de cina de parar i retrocedir
+                                                                                         //fins a alliberar els dos flags (es la 'R')  - passem al pas seguent 3
+                                                         if ( CaixaHaPassat == true && Flag1 == true ){ digitalWrite( MotorSortidaDireccio,HIGH ); analogWrite( MotorSortidaPwm,0 );}
+                                                         OrdreACinta[6] =  'o' ;
+                                                         OrdreACinta[7] = 64;
+                                                         OrdreACinta[8] = 'R';
+                                                         for (int CT = 0; CT <14; CT++) {TramaEnvio[CT] = OrdreACinta[CT]; }
+                                                         EnvioTrama = true ;  TX485();
+                                                         ProgramaCarrega = 3;
+                                               break;
+                                               case 3:                                //
+                                                         if ( CaixaHaPassat == true && Flag1 == true && Flag2 == true ){ 
+                                                                                           digitalWrite( MotorSortidaDireccio,LOW ); analogWrite( MotorSortidaPwm,25 );}  // LOW es direccio descarregar caixa
+                                                         if ( Flag2 == false ) {  digitalWrite( MotorSortidaDireccio,LOW ); analogWrite( MotorSortidaPwm,0 );}   
+                                                         ProgramaCarrega = 4;                         
+                                               break;
+                                               case 4:
+                                                        if ( CaixaHaPassat == true && Flag1 == true && Flag2 == false ){  ProgramaCarrega = 5; } break;
+                                                        if ( CaixaHaPassat == true && Flag1 == false ){ digitalWrite( MotorSortidaDireccio,HIGH );analogWrite( MotorSortidaPwm,25 ); }                                                                                                                        
+                                                        if ( Flag1 == true && Flag2 == true ) { digitalWrite ( MotorSortidaDireccio,HIGH );analogWrite( MotorSortidaPwm,0 ); ProgramaCarrega = 3; }
+                                               break;
+                                               case 5:
+                                                        digitalWrite( PowerMotorDc,LOW );    // parem la potencia dels motors 
+                                                        FlagsComEstan[1] = BarreraRemitent ;    // enviem a la barrera corrresponent 
+                                                        for (int CT = 0; CT <14; CT++) {TramaEnvio[CT] = FlagsComEstan[CT]; }
+                                                        EnvioTrama = true ;  TX485();
+                                                        ProgramaCarrega = 6;
+                                               break;
+                                               case 6:                           //medició alçada de caixa, i envio ordre a Master de final de carrega 
+                                                        NombreBits = 0;
+                                                        for ( int CT = 0; CT<8; CT++ ) { BitA = bitRead ( LedsVertical, CT ) ; NombreBits + BitA ; }
+                                                        
+                                                         for (int CT = 0; CT <14; CT++) {TramaEnvio[CT] = FlagsComEstan[CT]; }
+                                                        EnvioTrama = true ;  TX485();
+                                                        //LedsHoritzontal 
+                                                        //LedsVertical 
+                                               break;
+
+                                               case 7:
+                                               break;
+
+                                               case 8:
+                                               break;
+
+                                      
+                                                                            }
+                              }
+
+
+//digitalWrite( PowerMotorDc,LOW );
+//CaixaHaPassat =  false;
+//byte VelocitatDemanadaCintaEnvioMitja = 128;   
+//TopFinalEmissio
 //    FinalTransport     Permisos()
                                                             
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄    Gestio d'Emissio de missatges a partir d'ordres exteriors o seguretat     ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
@@ -403,7 +485,53 @@ if ((Milis30 - OldMilis30 ) > 20 ) { digitalWrite (Control_485_1, LOW);  TopFina
 RX485();
 
 }//█  loop  █████████████████████████████████████████████████████████████████████████████████████████
- //▄▄▄▄▄▄▄▄▄▄▄▄▄▄   PERMIS DE COMUNICACIO A BARRERES DE LES CINTES     ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment Automatic Rotacio Cinta Carrega▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+
+//MotorCarrega
+//MotorDescarrega
+void MovimentCarrega(){
+
+
+
+
+
+
+} //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment Automatic Rotacio Cinta Enrera▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+
+
+void MovimentDescarrega(){
+
+
+
+
+
+ }//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
+ //▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment Automatic Elevant ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+void InclinacioElevant(){
+
+
+  
+
+
+} //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+ 
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment Automatic Baixant ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+void InclinacioBaixant(){
+
+
+  
+
+ } //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
+ //▄▄▄▄▄▄▄▄▄▄▄▄▄▄   ALARMES     ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+void Alarmes(){
+ if (Alarma1 == true )  { AlarmesCom[7] = 1 ;    //No coincideix algun element d'adreça una vegada arribat a destinació. Comprovació creuada
+                                  for (int CT = 0; CT <14; CT++) {TramaEnvio[CT] = AlarmesCom[CT]; }
+                                  EnvioTrama = true ;  TX485(); 
+                                  }
+ 
+} //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄   PERMIS DE COMUNICACIO A BARRERES DE LES CINTES     ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 void Permisos(){
   EsperantTornEmissio = true ;
 
@@ -434,26 +562,22 @@ if ( BotoH == HIGH ) {  digitalWrite( MotorDcPlus1,HIGH  ); analogWrite( MotorDc
 if ( BotoL == HIGH )  {  digitalWrite( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,128 ); }
 
 } //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-//▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment Automatic Rotacio Cinta Endavant▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-/*
-bool RotEndavant;
-bool RotEnrera;
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment Automatic Rotacio Cinta Carrega▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 
-void RotacioCintaEndavant(){
-
-//if (RotEndavant == true) RotEnrera;
+//MotorCarrega
+//MotorDescarrega
+//void MovimentCarrega(){
 
 
 
-  
-}
 
-*/
- //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+
+
+//} //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment Automatic Rotacio Cinta Enrera▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 
 
-//void RotacioCintaEnrera(){
+//void MovimentDescarrega(){
 
 
 
@@ -600,8 +724,8 @@ if (ComptSegons ==4) {ComptSegons = 0;
 void Tempo1(){   if ( A == false ) { OldMilisTempo = millis();    t1 = t ;  A = true;}
                          MilisTempo = millis(); 
                          if ( OldMilisTempo + t1 < MilisTempo ) TempoA = true; A = false;                                   
-                      }
- //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+                      
+}   //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   interrupcions     ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 
