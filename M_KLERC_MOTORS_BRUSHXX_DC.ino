@@ -40,6 +40,7 @@ unsigned long SisCentsMicros;   // Variable de Temps Anterior per fer el rellotg
 unsigned long DosCentMicros;
 unsigned long MicroSegons;
 unsigned long UnSegon;
+unsigned long  CentMilis;
 bool TopSegon;
 unsigned long Segons;
 bool PostaAZero= false ;
@@ -153,7 +154,9 @@ int b=0;
 bool BotoH = false;
 bool BotoL = false;
 int ComptaManual = 0;
-bool MicroElevacio=0;
+bool MicroElevacio = 0;
+bool BaixadaFreno = 0 ;
+int ComptFrenada = 0;
 //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  
 //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  MOVIMENTS DE TRANSLACIÓ I ORDRES GENERALS▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 bool MarxaNormalB = false  ;
@@ -276,29 +279,18 @@ Top2 = false;
 TopSegon = false;
 MicroSegons=micros();
 
- if ( CincCentsMicros + 1200 <= MicroSegons ) {  Top = true; ControlTop1 = true ;  ControlTop2 = true ;CincCentsMicros = micros();  } //durada en us del cicle total d'un led
-  if ( CincCentsMicros +300 <= MicroSegons && ControlTop1 == true ) {  Top1 = true;    ControlTop1 = false ;  }  // punt de medició . s'ha de tenir en compte que lect analogica dura 160us.
-  if ( CincCentsMicros + 850 <= MicroSegons && ControlTop2 == true) {  Top2 = true;  ControlTop2 = false ;   }// moment de parada per no generar un consum constant llarg per les alimentacions
+ if ( CentMilis + 100000 <= MicroSegons ) {  Top = true; ControlTop1 = true ;  ControlTop2 = true ; CentMilis = micros();  } //durada en us del cicle total d'un led
+//  if ( CincCentsMicros +300 <= MicroSegons && ControlTop1 == true ) {  Top1 = true;    ControlTop1 = false ;  }  // punt de medició . s'ha de tenir en compte que lect analogica dura 160us.
+//  if ( CincCentsMicros + 850 <= MicroSegons && ControlTop2 == true) {  Top2 = true;  ControlTop2 = false ;   }// moment de parada per no generar un consum constant llarg per les alimentacions
  if (UnSegon + 1000000 <= MicroSegons ) { TopSegon = true; Segons++; UnSegon = MicroSegons ; PostaAZero = false ; }
                            if ( MicroSegons < 4000 && PostaAZero == false ) 
-                           { CincCentsMicros = 0 ; SisCentsMicros = 0;  DosCentMicros = 0 ; UnSegon = 0; 
+                           { CentMilis = 0 ;   UnSegon = 0; 
                             OldMilisTempo = 0; MilisTempo = 0 ; OldMilis30 = 0; PostaAZero = true ;}  //posta a '0' per overflow            
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
 
 //ProvaEnvioPerpetu(); //quan es vol enviar comandes repetitives 
 
-//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Comanda manual dels motors  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
-  BotoH = digitalRead (PolsadorH );    BotoL =  digitalRead (PolsadorL );
-if ( BotoH == false || BotoL == false ) { digitalWrite( PowerMotorDc,HIGH );  MicroElevacio = digitalRead ( ResetElevacio);   // llegim microrruptor d'elevació
-                                                             MovimentManual();  ComptaManual = 10 ;  }
-if ( Top == true ) { ComptaManual--; constrain (ComptaManual,0,100); 
-                             if ( ComptaManual == 2 ) {  digitalWrite( MotorDcPlus1,LOW  ); digitalWrite( MotorDcPlus2,LOW ); 
-                                                                         digitalWrite( MotorDcPwm1,LOW );digitalWrite( MotorDcPwm2,LOW ); 
-                                                                         digitalWrite( PowerMotorDc,LOW ); }
-                           }
 
-
-//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Posar en marxa general o paro  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
 //if (MarxaNormal  == true)     ;
 
@@ -523,7 +515,18 @@ if (Descarrega == true ){
 
 
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Comanda manual dels motors  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
+  BotoH = digitalRead (PolsadorH );    BotoL =  digitalRead (PolsadorL );
+if ( BotoH == false || BotoL == false ) { digitalWrite( PowerMotorDc,HIGH );  MicroElevacio = digitalRead ( ResetElevacio);   // llegim microrruptor d'elevació
+                                                                MovimentManual();  ComptaManual = 10 ;  BaixadaFreno = true ; }
+if ( Top == true ) { ComptaManual--; constrain (ComptaManual,0,100); 
+                             if ( ComptaManual == 2 ) {  digitalWrite( MotorDcPlus1,LOW  ); digitalWrite( MotorDcPlus2,LOW ); 
+                                                                         digitalWrite( MotorDcPwm1,LOW );digitalWrite( MotorDcPwm2,LOW ); 
+                                                                         digitalWrite( PowerMotorDc,LOW ); }
+                           }
+if (BaixadaFreno == true ) {FrenadaMotorDc(); }
 
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
 //♦♦♦♦♦♦♦♦♦♦♦♦♦♦   Tempos ♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦
 //per engegar una tempo posar TempoA a false i en t el temps de la tempo en milisegons. Quan s'acabe, la TempoA es posa a true 
 
@@ -534,7 +537,8 @@ if (Descarrega == true ){
 Milis30 = millis();
 if ((Milis30 - OldMilis30 ) > 20 ) { digitalWrite (Control_485_1, LOW);  TopFinalEmissio = true;  EsperantTornEmissio = false ;   }//tancament del port d'envio un temps després de l'inici de l'envio, per a deixar-li el temps de que es descarregui de manera autònoma                                                       
 RX485();
-
+ digitalWrite( PowerMotorDc,HIGH );
+ digitalWrite (MotorSortidaDireccio,LOW); analogWrite (MotorSortidaPwm,255);
 }//█  loop  █████████████████████████████████████████████████████████████████████████████████████████
   //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   Consola     ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 void ConsolaB(){
@@ -553,13 +557,32 @@ Serial.print(ComptHallDc );Serial.print(" " );Serial.println( );
 if ( BotoH == false ) {  Serial.println( "2");
  digitalWrite( MotorDcPlus1,HIGH  ); analogWrite( MotorDcPwm2,128 ); 
                                      if (ComptHallDc > 100)  { digitalWrite( MotorDcPlus1,LOW  ); analogWrite( MotorDcPwm2,0 );}
+                                     digitalWrite (MotorSortidaDireccio,HIGH); analogWrite (MotorSortidaPwm,128);
                                   }
 if ( BotoL == false )  {  digitalWrite( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,128 ); 
                                      if (ComptHallDc < 30)  digitalWrite ( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,20 );
                                    }
 ConsolaB();
 } //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+ //▄▄▄▄▄▄▄▄▄▄▄▄▄▄ Baixada frenant  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+void FrenadaMotorDc(){
+if ( BotoH == true && BotoL == true && BaixadaFreno == true){
+if (Top == true )  ComptFrenada++;
+// digitalWrite (MotorSortidaDireccio,HIGH); analogWrite (MotorSortidaPwm,125);
+if ( ComptFrenada >100 ) ComptFrenada = 0;
+if (ComptFrenada< 20)  {  digitalWrite( MotorDcPlus2,HIGH  ); analogWrite( MotorDcPwm1,50 ); } 
+if (ComptFrenada >20)                                {   
+                                     digitalWrite ( MotorDcPlus1,LOW  );  digitalWrite ( MotorDcPlus2,LOW );
+                                     analogWrite( MotorDcPwm1,255 );  analogWrite( MotorDcPwm2,225 );       }
+                                     
+                                      if ( MicroElevacio == true )  {BaixadaFreno = false;  digitalWrite ( MotorDcPlus1,LOW  );  digitalWrite ( MotorDcPlus2,LOW );
+                                                                                      digitalWrite( MotorDcPwm1,LOW );  digitalWrite( MotorDcPwm2,LOW );    
+                                                                                      digitalWrite( PowerMotorDc,LOW ); ComptFrenada = 0;
+                                                                                    }                                                  
+}
 
+
+}//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
  //▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment Automatic Elevant ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 void InclinacioElevant(){
    digitalWrite( MotorDcPlus1,HIGH  ); analogWrite( MotorDcPwm2,128 );
