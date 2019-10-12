@@ -4,7 +4,6 @@
 // UTILITZACIÓ DE CONSOLA PER A DONAR ORDRES EXTERNS, O PER REBRE INFORMACIÓ DIRECTE
 // A BASE DE M_KLERC
 // UTILITZACIÓ DEL PROGRAMA MODIFICAT PER A PILOTAT ELS MOTORS DEL SHUTTLE 
-//test...
 
 
 #define Control_485_1 6          //0=recepcio RX  1= transmissio TX   Control de flux RS485 ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
