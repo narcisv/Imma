@@ -157,6 +157,9 @@ int ComptaManual = 0;
 bool MicroElevacio = 0;
 bool BaixadaFreno = 0 ;
 int ComptFrenada = 0;
+int ComptManual2 = 0;
+bool ParoManual = false; 
+bool ArribatAZero = false;
 //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  
 //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  MOVIMENTS DE TRANSLACIÓ I ORDRES GENERALS▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 bool MarxaNormalB = false  ;
@@ -260,7 +263,7 @@ Serial.setTimeout(40);
 Serial1.setTimeout(40);
 
 //attachInterrupt(digitalPinToInterrupt(INTZERO), Interrumpint1 , RISING );   //flanc de pujada es RISING
-attachInterrupt(digitalPinToInterrupt(INTDOS),  Interrumpint2 , RISING );    //flanc de baixada es FALLING
+//attachInterrupt(digitalPinToInterrupt(INTDOS),  Interrumpint2 , RISING );    //flanc de baixada es FALLING  ███
 //attachInterrupt(digitalPinToInterrupt(INTTRES), Interrumpint3, CHANGE );  //qualsevol flanc es CHANGE
 
  wdt_disable();
@@ -518,15 +521,17 @@ if (Descarrega == true ){
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Comanda manual dels motors  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
   
   BotoH = digitalRead (PolsadorH );   // BotoL =  digitalRead (PolsadorL );
-  if ( BotoH == false ) { digitalWrite( PowerMotorDc,HIGH );  MicroElevacio = digitalRead ( ResetElevacio);   // llegim microrruptor d'elevació
+  if ( BotoH == false ) { digitalWrite( PowerMotorDc,HIGH );     // llegim microrruptor d'elevació
                                                                 MovimentManual();  ComptaManual = 10 ;  BaixadaFreno = true ; }
-  if ( Top == true ) { ComptaManual--; constrain (ComptaManual,0,100); 
-                             if ( ComptaManual == 2 ) {  digitalWrite( MotorDcPlus1,LOW  ); digitalWrite( MotorDcPlus2,LOW ); 
-                                                                         digitalWrite( MotorDcPwm1,LOW );digitalWrite( MotorDcPwm2,LOW ); 
-                                                                         digitalWrite( PowerMotorDc,LOW ); }
-                             }
-  if (  BaixadaFreno == true  &&  BotoH == true &&  MicroElevacio == false ) {  FrenadaMotorDc();  }
-
+ // if ( Top == true ) { ComptaManual--; constrain (ComptaManual,0,100); 
+//                             if ( ComptaManual == 2 ) {  digitalWrite( MotorDcPlus1,LOW  ); digitalWrite( MotorDcPlus2,LOW ); 
+ //                                                                        digitalWrite( MotorDcPwm1,LOW );digitalWrite( MotorDcPwm2,LOW ); 
+ //                                                                        digitalWrite( PowerMotorDc,LOW ); }
+  //                           }
+                           
+  if (  BaixadaFreno == true  &&  BotoH == true  ) {   FrenadaMotorDc();  }
+   MicroElevacio = digitalRead ( ResetElevacio); 
+   if ( MicroElevacio == true ) { ComptFrenada = 0; ParoManual = false; }
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
 //♦♦♦♦♦♦♦♦♦♦♦♦♦♦   Tempos ♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦
 //per engegar una tempo posar TempoA a false i en t el temps de la tempo en milisegons. Quan s'acabe, la TempoA es posa a true 
@@ -545,53 +550,67 @@ RX485();
 void ConsolaB(){
 
 
-Serial.print(BotoH );Serial.print(" " );Serial.print(BotoL );Serial.print(" " );Serial.print(ComptaManual );Serial.print(" " );Serial.print(MicroElevacio );Serial.print(" " );
-Serial.print(ComptHallDc );Serial.print(" " );Serial.println( );
+Serial.print(BotoH );Serial.print(" " );Serial.print(ComptFrenada );Serial.print(" " );Serial.print(ComptManual2 );
+Serial.print(" " );Serial.print(MicroElevacio );Serial.print(" " );
+Serial.print(ParoManual );Serial.print(" " );Serial.println( );
  
 }//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
  
  //▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment manual    ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
  
-int ComptManual2 = 0;
-bool ParoManual = false; 
+
  void MovimentManual(){  if ( MicroElevacio == true ) ComptHallDc = 0;
  
-if ( BotoH == false && ParoManual == false ) {  
- digitalWrite( MotorDcPlus1,HIGH  ); analogWrite( MotorDcPwm2,128 ); 
-if ( Top == true )  ComptManual2++; 
+if ( BotoH == false && ParoManual == false ) {
+                                                           digitalWrite( MotorDcPlus1,HIGH  );  digitalWrite ( MotorDcPlus2,LOW   ); digitalWrite ( MotorDcPwm1,LOW   );
+                                                            if (ComptManual2 <= 4 ) {    analogWrite( MotorDcPwm2,200 );  }
+                                                            if (ComptManual2 > 4 )   {   analogWrite( MotorDcPwm2,128 ); ArribatAZero = true ;   }
+
+                                                          if ( Top == true )  { ComptManual2++; constrain (ComptManual2 , 0, 50); }
+                                                          if (ComptManual2 == 27) { ParoManual = true; 
+                                                                         digitalWrite ( MotorDcPlus1,LOW  );  digitalWrite ( MotorDcPlus2,LOW   );
+                                                                         digitalWrite( MotorDcPwm1,HIGH );  analogWrite ( MotorDcPwm2,255 ); 
+                                                                                                     } 
+                                                                         }
 
                                     // if (ComptHallDc > 100)  { digitalWrite( MotorDcPlus1,LOW  ); analogWrite( MotorDcPwm2,0 );}
                                      digitalWrite (MotorSortidaDireccio,HIGH); analogWrite (MotorSortidaPwm,128);   // motor rotacio cinta
-                                  }
+                                  
 //if ( BotoL == false )  {  digitalWrite( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,128 ); 
 //                                     if (ComptHallDc < 30)  digitalWrite ( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,20 );
 //                                   }
 
 ConsolaB();
 } //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+
+
  //▄▄▄▄▄▄▄▄▄▄▄▄▄▄ Baixada frenant  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 void FrenadaMotorDc(){
-if ( BotoH == true  && BaixadaFreno == true){
+if ( BotoH == true  && BaixadaFreno == true){ 
 if (Top == true )  ComptFrenada++;
 // digitalWrite (MotorSortidaDireccio,HIGH); analogWrite (MotorSortidaPwm,125);
 if ( ComptFrenada >100 ) ComptFrenada = 0;
-if (ComptFrenada< 20)  {  digitalWrite( MotorDcPlus2,HIGH  ); analogWrite( MotorDcPwm1,50 ); } 
-if (ComptFrenada >20)                                {   
+if (ComptFrenada< 18)  {  digitalWrite( MotorDcPlus2,HIGH  ); analogWrite( MotorDcPwm1,50 ); } 
+if (ComptFrenada >18)                                {   
                                      digitalWrite ( MotorDcPlus1,LOW  );  digitalWrite ( MotorDcPlus2,LOW );
                                      analogWrite( MotorDcPwm1,255 );  analogWrite( MotorDcPwm2,225 );       }
                                      
-                                      if ( MicroElevacio == true )  {BaixadaFreno = false;  digitalWrite ( MotorDcPlus1,LOW  );  digitalWrite ( MotorDcPlus2,LOW );
-                                                                                      digitalWrite( MotorDcPwm1,LOW );  digitalWrite( MotorDcPwm2,LOW );    
-                                                                                      digitalWrite( PowerMotorDc,LOW ); ComptFrenada = 0;
+       if ( MicroElevacio == true  && ArribatAZero == true )    {ArribatAZero = false;  BaixadaFreno = false; 
+                                                        digitalWrite ( MotorDcPlus1,LOW  );  digitalWrite ( MotorDcPlus2,LOW );
+                                                        digitalWrite( MotorDcPwm1,HIGH );  digitalWrite( MotorDcPwm2,HIGH );    
+                                                        digitalWrite( PowerMotorDc,LOW ); ComptFrenada = 0; ParoManual = false; 
+                                                        ComptManual2 = 0;
                                                                                     }                                                  
-}
+                                                                           }
 
 
 }//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+
+ 
  //▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment Automatic Elevant ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 void InclinacioElevant(){
    digitalWrite( MotorDcPlus1,HIGH  ); analogWrite( MotorDcPwm2,128 );
-    if  ( ComptHallDc >= 90 ) digitalWrite( MotorDcPlus1,LOW  ); analogWrite( MotorDcPwm2,0 );
+    if  ( ComptHallDc >= 90 ) {digitalWrite( MotorDcPlus1,LOW  ); analogWrite( MotorDcPwm2,0 ); Serial.println("  hhh " );}
 
 
 } //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
@@ -599,15 +618,15 @@ void InclinacioElevant(){
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment Automatic Baixant ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 void InclinacioBaixant(){
     digitalWrite( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,64 );
-    if ( MicroElevacio == true ) digitalWrite( MotorDcPlus2,LOW );  analogWrite( MotorDcPwm1,0 );
+    if ( MicroElevacio == true ) {digitalWrite( MotorDcPlus2,LOW );  analogWrite( MotorDcPwm1,0 );}
   
 
  } //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   interrupcions     ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄     ▄▄▄
 
 //void Interrumpint1(){ ;  }//b++; Flash4 = false;  Flash1 = false;   Micros0= micros(); digitalWrite (Out3__,LOW) ; digitalWrite (Out3Pos,LOW) ;
-void Interrumpint2(){ if (Elevant == true )  ComptHallDc++; if (ComptHallDc > 100)  { digitalWrite( MotorDcPlus1,LOW  ); analogWrite( MotorDcPwm2,0 ); }
-                                 if (DesElevant == true )  ComptHallDc--; if (ComptHallDc < 30)  digitalWrite( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,20 ); }
+//void Interrumpint2(){ if (Elevant == true )  ComptHallDc++; if (ComptHallDc > 100)  { digitalWrite( MotorDcPlus1,LOW  ); analogWrite( MotorDcPwm2,0 ); }
+//                                 if (DesElevant == true )  ComptHallDc--; if (ComptHallDc < 30)  digitalWrite( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,20 ); }
                                  
                                   
  //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
