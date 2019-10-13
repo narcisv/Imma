@@ -516,15 +516,16 @@ if (Descarrega == true ){
 
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Comanda manual dels motors  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
-  BotoH = digitalRead (PolsadorH );    BotoL =  digitalRead (PolsadorL );
-if ( BotoH == false || BotoL == false ) { digitalWrite( PowerMotorDc,HIGH );  MicroElevacio = digitalRead ( ResetElevacio);   // llegim microrruptor d'elevació
+  
+  BotoH = digitalRead (PolsadorH );   // BotoL =  digitalRead (PolsadorL );
+  if ( BotoH == false ) { digitalWrite( PowerMotorDc,HIGH );  MicroElevacio = digitalRead ( ResetElevacio);   // llegim microrruptor d'elevació
                                                                 MovimentManual();  ComptaManual = 10 ;  BaixadaFreno = true ; }
-if ( Top == true ) { ComptaManual--; constrain (ComptaManual,0,100); 
+  if ( Top == true ) { ComptaManual--; constrain (ComptaManual,0,100); 
                              if ( ComptaManual == 2 ) {  digitalWrite( MotorDcPlus1,LOW  ); digitalWrite( MotorDcPlus2,LOW ); 
                                                                          digitalWrite( MotorDcPwm1,LOW );digitalWrite( MotorDcPwm2,LOW ); 
                                                                          digitalWrite( PowerMotorDc,LOW ); }
-                           }
-if (BaixadaFreno == true ) {FrenadaMotorDc(); }
+                             }
+  if (  BaixadaFreno == true  &&  BotoH == true &&  MicroElevacio == false ) {  FrenadaMotorDc();  }
 
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
 //♦♦♦♦♦♦♦♦♦♦♦♦♦♦   Tempos ♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦
@@ -551,22 +552,26 @@ Serial.print(ComptHallDc );Serial.print(" " );Serial.println( );
  
  //▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Moviment manual    ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
  
-
+int ComptManual2 = 0;
+bool ParoManual = false; 
  void MovimentManual(){  if ( MicroElevacio == true ) ComptHallDc = 0;
  
-if ( BotoH == false ) {  Serial.println( "2");
+if ( BotoH == false && ParoManual == false ) {  
  digitalWrite( MotorDcPlus1,HIGH  ); analogWrite( MotorDcPwm2,128 ); 
-                                     if (ComptHallDc > 100)  { digitalWrite( MotorDcPlus1,LOW  ); analogWrite( MotorDcPwm2,0 );}
-                                     digitalWrite (MotorSortidaDireccio,HIGH); analogWrite (MotorSortidaPwm,128);
+if ( Top == true )  ComptManual2++; 
+
+                                    // if (ComptHallDc > 100)  { digitalWrite( MotorDcPlus1,LOW  ); analogWrite( MotorDcPwm2,0 );}
+                                     digitalWrite (MotorSortidaDireccio,HIGH); analogWrite (MotorSortidaPwm,128);   // motor rotacio cinta
                                   }
-if ( BotoL == false )  {  digitalWrite( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,128 ); 
-                                     if (ComptHallDc < 30)  digitalWrite ( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,20 );
-                                   }
+//if ( BotoL == false )  {  digitalWrite( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,128 ); 
+//                                     if (ComptHallDc < 30)  digitalWrite ( MotorDcPlus2,HIGH );  analogWrite( MotorDcPwm1,20 );
+//                                   }
+
 ConsolaB();
 } //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
  //▄▄▄▄▄▄▄▄▄▄▄▄▄▄ Baixada frenant  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 void FrenadaMotorDc(){
-if ( BotoH == true && BotoL == true && BaixadaFreno == true){
+if ( BotoH == true  && BaixadaFreno == true){
 if (Top == true )  ComptFrenada++;
 // digitalWrite (MotorSortidaDireccio,HIGH); analogWrite (MotorSortidaPwm,125);
 if ( ComptFrenada >100 ) ComptFrenada = 0;
