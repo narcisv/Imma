@@ -218,6 +218,7 @@ bool ParoCicle6 = true;
 
 int ComptadorPassos1 = 0;
 int ComptadorPassos2 = 0;
+bool CANVI = false;
 //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 
 
@@ -292,19 +293,12 @@ MicroSegons=micros();
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
 //▄▄▄▄▄▄▄  
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  Comanda manual dels motors  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
-  
-  BotoH = digitalRead (PolsadorH );   // BotoL =  digitalRead (PolsadorL );
-  if ( BotoH == false ) { digitalWrite( PowerMotorDc,HIGH );     // llegim microrruptor d'elevació
-                                                                MovimentManual();  ComptaManual = 10 ;  BaixadaFreno = true ; }
- // if ( Top == true ) { ComptaManual--; constrain (ComptaManual,0,100); 
-//                             if ( ComptaManual == 2 ) {  digitalWrite( MotorDcPlus1,LOW  ); digitalWrite( MotorDcPlus2,LOW ); 
- //                                                                        digitalWrite( MotorDcPwm1,LOW );digitalWrite( MotorDcPwm2,LOW ); 
- //                                                                        digitalWrite( PowerMotorDc,LOW ); }
-  //                           }
-                           
-  //if (  BaixadaFreno == true  &&  BotoH == true  ) {   FrenadaMotorDc();  }███████
-   MicroElevacio = digitalRead ( ResetElevacio); 
-   if ( MicroElevacio == true ) { ComptFrenada = 0; ParoManual = false; ComptManual2= 0; }
+
+
+if (TopSegon == 1 ) CANVI = !CANVI;
+ digitalWrite (PowerMotorDc, CANVI );
+
+
 //▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
 //♦♦♦♦♦♦♦♦♦♦♦♦♦♦   Tempos ♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦♦
 //per engegar una tempo posar TempoA a false i en t el temps de la tempo en milisegons. Quan s'acabe, la TempoA es posa a true 
